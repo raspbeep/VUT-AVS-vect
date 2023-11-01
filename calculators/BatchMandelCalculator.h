@@ -25,7 +25,7 @@ private:
     float *xcalc;
     float *ycalc;
 
-    const int tile_size = 128;
+    const int tile_size = 64;
 };
 
 #endif
