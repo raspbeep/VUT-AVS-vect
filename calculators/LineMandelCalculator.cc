@@ -50,8 +50,8 @@ int *LineMandelCalculator::calculateMandelbrot() {
 			ys[j] = y;
 			xc[j] = xb;
 		}
-		
-		for (int k = 0, escaped=0; k < limit && escaped < width; ++k) {
+		#pragma omp simd aligned(xs, ys, xc, pdata:64) simdlen(16)
+		for (int k = 0, escaped=0; k < limit; ++k) {
 			escaped = 0;
 			#pragma omp simd aligned(xs, ys, xc, pdata:64) reduction(+:escaped) simdlen(16)
 			for (int j = 0; j < width; j++) {
@@ -65,8 +65,10 @@ int *LineMandelCalculator::calculateMandelbrot() {
 				ys[j] = 2.0f * xs[j] * ys[j] + y;
 				xs[j] = r2 - i2 + xc[j];
 			}
+			if (escaped >= width) break;
         }
-		std::memcpy(&pdata[(height-i-1) * width], &pdata[r], width*sizeof(int));
+		std::memcpy(&pdata[(height-1) * width - r], &pdata[r], width*sizeof(int));
+
     }
     return data;
 }
