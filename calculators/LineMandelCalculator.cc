@@ -38,10 +38,9 @@ int *LineMandelCalculator::calculateMandelbrot() {
     int *pdata = data, r;
 	float *xs = xvals, *ys = yvals, *xc = xcalc, xb, r2, i2, y;
 
-	
+	r = 0;
     for (int i = 0; i < height/2; i++) {
 		y = y_start + i * dy;
-		r = i*width;
 		#pragma omp simd aligned(xs, ys, xc, pdata: 64)
 		for (int j = 0; j < width; j++) {
 			pdata[r + j] = 0;
@@ -76,6 +75,7 @@ int *LineMandelCalculator::calculateMandelbrot() {
 			}
         }
 		std::memcpy(&pdata[(height-i-1) * width], &pdata[r], width*sizeof(int));
+		r += width;
     }
     return data;
 }
