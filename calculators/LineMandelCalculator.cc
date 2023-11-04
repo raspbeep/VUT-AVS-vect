@@ -18,6 +18,7 @@
 LineMandelCalculator::LineMandelCalculator (unsigned matrixBaseSize, unsigned limit) :
 	BaseMandelCalculator(matrixBaseSize, limit, "LineMandelCalculator") {
 	data = (int *)(aligned_alloc(64, height * width * sizeof(int)));
+	line_b = (int *)(aligned_alloc(64, width * sizeof(int)));
 	xvals = (float *)(aligned_alloc(64, width * sizeof(float)));
 	yvals = (float *)(aligned_alloc(64, width * sizeof(float)));
 	xcalc = (float *)(aligned_alloc(64, width * sizeof(float)));
@@ -28,35 +29,32 @@ LineMandelCalculator::~LineMandelCalculator() {
 	free(xvals);
 	free(yvals);
 	free(xcalc);
+	free(line_b);
 	data=NULL;
 	xvals=NULL;
 	yvals=NULL;
 	xcalc=NULL;
+	line_b=NULL;
 }
 
 int *LineMandelCalculator::calculateMandelbrot() {
-    int *pdata = data, r;
+    int *pdata = data, r, w = sizeof(float) * width;
 	float *xs = xvals, *ys = yvals, *xc = xcalc, xb, r2, i2, y;
 
 	r = 0;
-    for (int i = 0; i < height/2; i++) {
+    for (int i = 0; i < height / 2; i++) {
 		y = y_start + i * dy;
-		#pragma omp simd aligned(xs, ys, xc, pdata: 64)
+		#pragma omp simd aligned(xs: 64)
 		for (int j = 0; j < width; j++) {
-			pdata[r + j] = 0;
-			xb = x_start + (j * dx);
-			xs[j] = xb;
-			ys[j] = y;
-			xc[j] = xb;
+			xs[j] = x_start + (j * dx);
 		}
-<<<<<<< HEAD
-		#pragma omp simd aligned(xs, ys, xc, pdata:64) simdlen(16)
-		for (int k = 0, escaped=0; k < limit; ++k) {
-=======
+		std::memcpy(xc, xs, w);
+		std::uninitialized_fill(ys, ys + width, y);
+		std::uninitialized_fill(line_b, line_b + width, 0);
+
 		int first = 0;
 		bool f;
 		for (int k = 0, escaped=0; k < limit && escaped < width; ++k) {
->>>>>>> e7e224b0078864a19ccc6ca585b2b0686e020431
 			escaped = 0;
 			f = true;
 			#pragma omp simd aligned(xs, ys, xc, pdata:64) simdlen(16)
@@ -66,7 +64,7 @@ int *LineMandelCalculator::calculateMandelbrot() {
 				i2 = ys[j] * ys[j];
 
 				if ((r2 + i2 < 4.0f)) {
-					pdata[r + j]++;
+					line_b[j]++;
 					if (f && first <= j) {
 						f = false;
 						first = j;
@@ -80,13 +78,9 @@ int *LineMandelCalculator::calculateMandelbrot() {
 			}
 			if (escaped >= width) break;
         }
-<<<<<<< HEAD
-		std::memcpy(&pdata[(height-1) * width - r], &pdata[r], width*sizeof(int));
-
-=======
-		std::memcpy(&pdata[(height-i-1) * width], &pdata[r], width*sizeof(int));
+		std:memcpy(&pdata[r], line_b, w);
+		std::memcpy(&pdata[(height-i-1) * width], &pdata[r], w);
 		r += width;
->>>>>>> e7e224b0078864a19ccc6ca585b2b0686e020431
     }
     return data;
 }

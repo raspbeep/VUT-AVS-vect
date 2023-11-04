@@ -66,9 +66,10 @@ int * BatchMandelCalculator::calculateMandelbrot () {
 					v = row_count + k; 
 					xs[v] = xb;
 					ys[v] = yb;
-					xc[k] = xb;
 				}
+				std::uninitialized_fill(ys, ys + tile_size, yb);
 			}
+			std::memcpy(xc, xs, sizeof(float) * tile_size);
 
 			for (int q = 0, escaped=0; (q < limit) &&
 			 (escaped < (tile_size_s)); ++q) {

@@ -16,6 +16,7 @@ public:
 
 private:
     int *data;
+    int *line_b;
 
     float *xvals;
     float *yvals;
