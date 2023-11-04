@@ -56,12 +56,11 @@ int * BatchMandelCalculator::calculateMandelbrot () {
 			i_t_s_w_t = i_t_s_w + start;
 
 			#pragma omp simd aligned(xs, ys, xc, yc, pdata: 64) simdlen(16)
-			for (int j = 0, j_w = i_t_s_w_t; j < tile_size; j++, j_w += width) {
+			for (int j = 0; j < tile_size; j++) {
 				yb = y_start + ((i_t_s + j) * dy);
 				row_count = j * tile_size;
 				yc[j] = yb;
 				for (int k = 0; k < tile_size; k++) {
-					pdata[j_w + k] = 0;
 					xb = x_start + ((start + k) * dx);
 					v = row_count + k; 
 					xs[v] = xb;
@@ -69,6 +68,8 @@ int * BatchMandelCalculator::calculateMandelbrot () {
 				}
 				std::uninitialized_fill(ys, ys + tile_size, yb);
 			}
+
+			std::uninitialized_fill(pdata, pdata[height * width], 0);
 			std::memcpy(xc, xs, sizeof(float) * tile_size);
 
 			for (int q = 0, escaped=0; (q < limit) &&
@@ -81,9 +82,12 @@ int * BatchMandelCalculator::calculateMandelbrot () {
 						r2 = xs[v] * xs[v];
 						i2 = ys[v] * ys[v];
 
-						(r2 + i2 < 4.0f) ? 
-							pdata[j_w + k]++ : 
+						if (r2 + i2 < 4.0f) {
+							pdata[j_w + k]++;
+						} else {
 							escaped++;
+						}
+							
 						
 						ys[v] = 2.0f * xs[v] * ys[v] + yc[j];
 						xs[v] = r2 - i2 + xc[k];

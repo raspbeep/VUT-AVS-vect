@@ -78,7 +78,7 @@ int *LineMandelCalculator::calculateMandelbrot() {
 			}
 			if (escaped >= width) break;
         }
-		std:memcpy(&pdata[r], line_b, w);
+		std:memcpy(&pdata[i * width], line_b, w);
 		std::memcpy(&pdata[(height-i-1) * width], &pdata[r], w);
 		r += width;
     }
